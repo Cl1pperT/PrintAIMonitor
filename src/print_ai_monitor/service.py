@@ -58,7 +58,7 @@ class WebhookService:
             )
             return ServiceResponse(401, {"detail": "Invalid secret"})
 
-        if event_type != self._settings.trigger_event_type:
+        if event_type not in self._settings.trigger_event_types:
             log_event(
                 self._logger,
                 logging.INFO,
@@ -66,6 +66,7 @@ class WebhookService:
                 reason="event_type",
                 event_type=event_type,
                 print_id=print_id,
+                accepted_event_types=self._settings.trigger_event_types,
             )
             return ServiceResponse(200, {"status": "ignored", "reason": "event_type"})
 

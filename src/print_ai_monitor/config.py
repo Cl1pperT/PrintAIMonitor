@@ -19,7 +19,7 @@ class Settings:
     tapo_host: str = ""
     tapo_username: str = ""
     tapo_password: str = ""
-    trigger_event_type: int = 8
+    trigger_event_types: tuple[int, ...] = (7, 8)
     dedupe_ttl_seconds: int = 900
     plug_off_retry_count: int = 2
     log_level: str = "INFO"
@@ -38,7 +38,7 @@ class Settings:
             tapo_host=os.getenv("TAPO_HOST", "").strip(),
             tapo_username=os.getenv("TAPO_USERNAME", "").strip(),
             tapo_password=os.getenv("TAPO_PASSWORD", "").strip(),
-            trigger_event_type=_int_env("TRIGGER_EVENT_TYPE", 8),
+            trigger_event_types=_event_types_env(),
             dedupe_ttl_seconds=_int_env("DEDUPE_TTL_SECONDS", 900, minimum=1),
             plug_off_retry_count=_int_env("PLUG_OFF_RETRY_COUNT", 2, minimum=0),
             log_level=os.getenv("LOG_LEVEL", "INFO").strip().upper() or "INFO",
@@ -87,3 +87,22 @@ def _int_env(name: str, default: int, minimum: int | None = None, maximum: int |
     if maximum is not None and value > maximum:
         raise ConfigError(f"{name} must be <= {maximum}")
     return value
+
+
+def _event_types_env() -> tuple[int, ...]:
+    raw_values = os.getenv("TRIGGER_EVENT_TYPES")
+    if raw_values:
+        values: list[int] = []
+        for raw_value in raw_values.split(","):
+            item = raw_value.strip()
+            if not item:
+                continue
+            try:
+                values.append(int(item))
+            except ValueError as exc:
+                raise ConfigError("TRIGGER_EVENT_TYPES must be a comma-separated list of integers") from exc
+        if not values:
+            raise ConfigError("TRIGGER_EVENT_TYPES must contain at least one event type")
+        return tuple(dict.fromkeys(values))
+
+    return (_int_env("TRIGGER_EVENT_TYPE", 8),)

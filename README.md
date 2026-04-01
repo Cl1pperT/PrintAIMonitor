@@ -1,13 +1,13 @@
 # Print AI Monitor
 
-`print-ai-monitor` runs on a Raspberry Pi and listens for OctoEverywhere webhook events. When OctoEverywhere reports `EventType=8` (`Gadget Paused Print Due To Failure`), the service turns off a TAPO P125M smart plug over the local network.
+`print-ai-monitor` runs on a Raspberry Pi and listens for OctoEverywhere webhook events. When OctoEverywhere reports `EventType=7` (`Gadget Possible Failure Warning`) or `EventType=8` (`Gadget Paused Print Due To Failure`), the service turns off a TAPO P125M smart plug over the local network.
 
 ## What It Does
 
 - Exposes `POST /webhook/octoeverywhere` for OctoEverywhere LAN webhooks.
 - Exposes `GET /healthz` for liveness checks.
 - Authenticates webhook payloads with a shared secret.
-- Ignores all events except `EventType=8`.
+- Ignores all events except the configured trigger event types.
 - Suppresses duplicate shutdown attempts for the same `PrintId`.
 - Retries local TAPO power-off requests on transient failures.
 
@@ -35,6 +35,7 @@ Edit `.env` and set:
 - `TAPO_HOST`
 - `TAPO_USERNAME`
 - `TAPO_PASSWORD`
+- `TRIGGER_EVENT_TYPES=7,8`
 
 ## Local Commands
 
@@ -69,7 +70,7 @@ In OctoEverywhere Custom Webhook Setup:
   - `http://<pi-lan-ip>:8787/webhook/octoeverywhere` if OctoEverywhere runs in a container or cannot reach loopback
 - Secret Key: the same value as `OCTOEVERYWHERE_SECRET`
 
-OctoEverywhere can send many notification types. This service only acts on `EventType=8` and will acknowledge the rest without shutting off power.
+OctoEverywhere can send many notification types. This service only acts on the configured trigger events, which default to `EventType=7` and `EventType=8`, and it will acknowledge the rest without shutting off power.
 
 ## systemd
 

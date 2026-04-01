@@ -12,7 +12,7 @@ def build_settings() -> Settings:
         tapo_host="192.168.1.25",
         tapo_username="user@example.com",
         tapo_password="pass",
-        trigger_event_type=8,
+        trigger_event_types=(7, 8),
         dedupe_ttl_seconds=60,
         plug_off_retry_count=2,
     )

@@ -28,7 +28,7 @@ def build_settings() -> Settings:
         tapo_host="192.168.1.25",
         tapo_username="user@example.com",
         tapo_password="pass",
-        trigger_event_type=8,
+        trigger_event_types=(7, 8),
         dedupe_ttl_seconds=60,
         plug_off_retry_count=2,
     )
@@ -46,10 +46,20 @@ async def test_secret_validation_rejects_wrong_secret() -> None:
 async def test_ignores_non_trigger_event() -> None:
     plug = FakePlugController()
     service = WebhookService(build_settings(), plug)
-    response = await service.handle_payload({"EventType": 7, "SecretKey": "super-secret"})
+    response = await service.handle_payload({"EventType": 3, "SecretKey": "super-secret"})
     assert response.status_code == 200
     assert response.payload == {"status": "ignored", "reason": "event_type"}
     assert plug.calls == 0
+
+
+@pytest.mark.asyncio
+async def test_event_type_7_triggers_power_cut() -> None:
+    plug = FakePlugController()
+    service = WebhookService(build_settings(), plug)
+    response = await service.handle_payload({"EventType": 7, "SecretKey": "super-secret"})
+    assert response.status_code == 200
+    assert response.payload == {"status": "success", "action": "plug_off"}
+    assert plug.calls == 1
 
 
 @pytest.mark.asyncio

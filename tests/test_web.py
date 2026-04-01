@@ -24,7 +24,7 @@ def build_settings() -> Settings:
         tapo_host="192.168.1.25",
         tapo_username="user@example.com",
         tapo_password="pass",
-        trigger_event_type=8,
+        trigger_event_types=(7, 8),
         dedupe_ttl_seconds=60,
         plug_off_retry_count=2,
     )
@@ -52,6 +52,23 @@ async def test_webhook_accepts_valid_trigger() -> None:
         response = await client.post(
             "/webhook/octoeverywhere",
             json={"EventType": 8, "PrintId": "print-1", "SecretKey": "super-secret"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "success", "action": "plug_off"}
+    assert plug.calls == 1
+
+
+@pytest.mark.asyncio
+async def test_webhook_accepts_event_type_7_trigger() -> None:
+    plug = FakePlugController()
+    app = create_app(build_settings(), plug_controller=plug)
+    transport = httpx.ASGITransport(app=app)
+
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        response = await client.post(
+            "/webhook/octoeverywhere",
+            json={"EventType": 7, "PrintId": "print-7", "SecretKey": "super-secret"},
         )
 
     assert response.status_code == 200
